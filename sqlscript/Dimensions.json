@@ -1,0 +1,17 @@
+{
+	"name": "Dimensions",
+	"properties": {
+		"content": {
+			"query": "\n-- Dim Customer\nIF NOT EXISTS(SELECT * FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id \nWHERE t.name = 'DimCustomers' AND s.name = 'gold' )\n\nCREATE EXTERNAL TABLE gold.DimCustomers\nWITH\n    (\n        LOCATION = 'DimCustomers',\n        DATA_SOURCE = gold_source,\n        FILE_FORMAT = parquet_format\n    )\nAS\nSELECT \n    ROW_NUMBER() OVER(ORDER BY CustomerID) AS DimCustomers,\n    CustomerID,\n    CustomerName,\n    CustomerEmail\nFROM(\n    SELECT \n    DISTINCT \n    CustomerID,\n    CustomerName,\n    CustomerEmail\nFROM silver.silverTable \n) AS t\n\n-- Dim Product\nIF NOT EXISTS(SELECT * FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id \n    WHERE t.name = 'DimProducts' AND s.name = 'gold' )\nCREATE EXTERNAL TABLE gold.DimProducts\nWITH\n    (\n        LOCATION = 'DimProducts',\n        DATA_SOURCE = gold_source,\n        FILE_FORMAT = parquet_format\n    )\nAS\nSELECT \n    ROW_NUMBER() OVER(ORDER BY ProductID) AS DimProducts,\n    ProductID,\n    ProductName,\n    ProductCategory\nFROM(\n    SELECT \n    DISTINCT \n    ProductID,\n    ProductName,\n    ProductCategory\nFROM silver.silverTable \n) AS t\n\n\n-- Dim Region\nIF NOT EXISTS(SELECT * FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id \n    WHERE t.name = 'DimRegions' AND s.name = 'gold' )\nCREATE EXTERNAL TABLE gold.DimRegions\nWITH\n    (\n        LOCATION = 'DimRegions',\n        DATA_SOURCE = gold_source,\n        FILE_FORMAT = parquet_format\n    )\nAS\nSELECT \n    ROW_NUMBER() OVER(ORDER BY RegionID) AS DimRegions,\n    RegionID,\n    RegionName,\n    Country\nFROM(\n    SELECT \n    DISTINCT \n    RegionID,\n    RegionName,\n    Country\nFROM silver.silverTable \n) AS t\n\nSELECT * FROM silver.silverTable\n\n-- Dim Order\nIF NOT EXISTS(SELECT * FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id \n    WHERE t.name = 'DimOrders' AND s.name = 'gold' )\nCREATE EXTERNAL TABLE gold.DimOrders\nWITH\n    (\n        LOCATION = 'DimOrders',\n        DATA_SOURCE = gold_source,\n        FILE_FORMAT = parquet_format\n    )\nAS\nSELECT \n    ROW_NUMBER() OVER(ORDER BY OrderID) AS DimOrders,\n    OrderID,\n    OrderDate,\n    CustomerID,\n    CustomerName,\n    CustomerEmail,\n    ProductID,\n    ProductName,\n    ProductCategory,\n    RegionID,\n    RegionName,\n    Country\nFROM(\n    SELECT \n    DISTINCT \n    OrderID,\n    OrderDate,\n    CustomerID,\n    CustomerName,\n    CustomerEmail,\n    ProductID,\n    ProductName,\n    ProductCategory,\n    RegionID,\n    RegionName,\n    Country\nFROM silver.silverTable \n) AS t\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "SalesDWH",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

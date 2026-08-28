@@ -1,0 +1,17 @@
+{
+	"name": "ExplorationScript",
+	"properties": {
+		"content": {
+			"query": "-- This is auto-generated code\nSELECT\n    TOP 100 *\nFROM\n    OPENROWSET(\n        BULK 'enriched_sales',\n        DATA_SOURCE = 'silver_source' ,\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n-- list external sources\nSELECT *\nFROM sys.external_data_sources;\n\nSELECT * FROM silver.silverTable;\n\n-- to see schema\nEXEC sp_describe_first_result_set\nN'\nSELECT *\nFROM OPENROWSET(\n    BULK ''enriched_sales/'',\n    DATA_SOURCE = ''silver_source'',\n    FORMAT = ''PARQUET''\n) AS result;\n';\n\n-- schema handling \nSELECT\n     *\nFROM\n    OPENROWSET\n(\n        BULK 'enriched_sales',\n        DATA_SOURCE = 'silver_source' ,\n        FORMAT = 'PARQUET'\n)\nWITH\n(\n    ORDER_DI VARCHAR(100) 1\n\n) as query1\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "SalesDWH",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

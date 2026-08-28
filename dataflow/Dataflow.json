@@ -1,0 +1,66 @@
+{
+	"name": "Dataflow",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_parquet_bronze",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_parquet_silver",
+						"type": "DatasetReference"
+					},
+					"name": "silverDestination"
+				}
+			],
+			"transformations": [
+				{
+					"name": "filtergreaterthan100"
+				},
+				{
+					"name": "deriveddomain"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          OrderID as string,",
+				"          OrderDate as date,",
+				"          CustomerID as string,",
+				"          CustomerName as string,",
+				"          CustomerEmail as string,",
+				"          ProductID as string,",
+				"          ProductName as string,",
+				"          ProductCategory as string,",
+				"          RegionID as string,",
+				"          RegionName as string,",
+				"          Country as string,",
+				"          Quantity as string,",
+				"          UnitPrice as long,",
+				"          TotalAmount as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> source1",
+				"source1 filter(UnitPrice>=100) ~> filtergreaterthan100",
+				"filtergreaterthan100 derive(domain = split(CustomerEmail,'@')[2]) ~> deriveddomain",
+				"deriveddomain sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> silverDestination"
+			]
+		}
+	}
+}
