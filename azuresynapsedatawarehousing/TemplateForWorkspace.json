@@ -1,0 +1,846 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"type": "string",
+			"metadata": "Workspace name",
+			"defaultValue": "azuresynapsedatawarehousing"
+		},
+		"azuresynapsedatawarehousing-WorkspaceDefaultSqlServer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'azuresynapsedatawarehousing-WorkspaceDefaultSqlServer'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:azuresynapsedatawarehousing.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+		},
+		"ls_serverless_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'ls_serverless'"
+		},
+		"azuresynapsedatawarehousing-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://synpsmngdstrg.dfs.core.windows.net"
+		},
+		"ls_datalake_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://projectstoragenoor.dfs.core.windows.net/"
+		},
+		"ls_serverless_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "azuresynapsedatawarehousing-ondemand.sql.azuresynapse.net"
+		},
+		"ls_serverless_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "SalesDWH"
+		},
+		"ls_serverless_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "adminnoor"
+		}
+	},
+	"variables": {
+		"workspaceId": "[concat('Microsoft.Synapse/workspaces/', parameters('workspaceName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('workspaceName'), '/rawIngestion')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "RawIngestion",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "OrderID",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "OrderID",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "OrderDate",
+											"type": "Date",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "OrderDate",
+											"type": "Date",
+											"isNullable": true
+										}
+									},
+									{
+										"source": {
+											"name": "CustomerID",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CustomerID",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "CustomerName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CustomerName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "CustomerEmail",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "CustomerEmail",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductID",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ProductID",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ProductName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductCategory",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "ProductCategory",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "RegionID",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "RegionID",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "RegionName",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "RegionName",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Country",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Country",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "Quantity",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "Quantity",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									},
+									{
+										"source": {
+											"name": "UnitPrice",
+											"type": "Int64",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "UnitPrice",
+											"type": "Int64",
+											"isNullable": true
+										}
+									},
+									{
+										"source": {
+											"name": "TotalAmount",
+											"type": "String",
+											"physicalType": "String"
+										},
+										"sink": {
+											"name": "TotalAmount",
+											"type": "String",
+											"physicalType": "UTF8"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_csv_source",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_parquet_sink",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-08-28T00:53:52Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/ds_csv_source')]",
+				"[concat(variables('workspaceId'), '/datasets/ds_parquet_sink')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/silverTransformation')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "DataTransformation",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "Dataflow",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"silverDestination": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "SilverTable",
+						"type": "Script",
+						"dependsOn": [
+							{
+								"activity": "DataTransformation",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "ls_serverless",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": {
+										"value": "IF NOT EXISTS(SELECT * FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id \nWHERE t.name = 'silverTable' AND s.name = 'silver' )\n    CREATE EXTERNAL TABLE silver.silverTable\n    (\n        OrderID          VARCHAR(100),\n        OrderDate        DATE,\n        CustomerID       VARCHAR(100),\n        CustomerName     VARCHAR(100),\n        CustomerEmail    VARCHAR(100),\n        ProductID        VARCHAR(100),\n        ProductName      VARCHAR(100),\n        ProductCategory  VARCHAR(100),\n        RegionID         VARCHAR(100),\n        RegionName       VARCHAR(100),\n        Country          VARCHAR(100),\n        Quantity         VARCHAR(100),\n        UnitPrice        BIGINT,\n        TotalAmount      VARCHAR(100),\n        Domain           VARCHAR(100)\n    )\n    WITH\n    (\n        LOCATION = 'enriched_sales',\n        DATA_SOURCE = silver_source,\n        FILE_FORMAT = parquet_format\n    );\n\n\n\n\n",
+										"type": "Expression"
+									}
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-08-28T22:34:02Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/dataflows/Dataflow')]",
+				"[concat(variables('workspaceId'), '/linkedServices/ls_serverless')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ds_csv_source')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_datalake",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "order_day1.csv",
+						"folderPath": "source_orders",
+						"fileSystem": "source"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/ls_datalake')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ds_parquet_bronze')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_datalake",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "sales",
+						"fileSystem": "bronze"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/ls_datalake')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ds_parquet_silver')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_datalake",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "enriched_sales",
+						"fileSystem": "silver"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/ls_datalake')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ds_parquet_sink')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_datalake",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "order_day1.parquet",
+						"folderPath": "sales",
+						"fileSystem": "bronze"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/ls_datalake')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ds_sink_parquet')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_datalake",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "orderDay0.parquet",
+						"folderPath": "sales",
+						"fileSystem": "bronze"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/ls_datalake')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ds_source_csv')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_datalake",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "order_day0.csv",
+						"folderPath": "source_orders",
+						"fileSystem": "source"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/ls_datalake')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/azuresynapsedatawarehousing-WorkspaceDefaultSqlServer')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"parameters": {
+					"DBName": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"connectionString": "[parameters('azuresynapsedatawarehousing-WorkspaceDefaultSqlServer_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/azuresynapsedatawarehousing-WorkspaceDefaultStorage')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('azuresynapsedatawarehousing-WorkspaceDefaultStorage_properties_typeProperties_url')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ls_datalake')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('ls_datalake_properties_typeProperties_url')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ls_serverless')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"server": "[parameters('ls_serverless_properties_typeProperties_server')]",
+					"database": "[parameters('ls_serverless_properties_typeProperties_database')]",
+					"encrypt": "optional",
+					"trustServerCertificate": false,
+					"authenticationType": "SQL",
+					"userName": "[parameters('ls_serverless_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('ls_serverless_password')]"
+					}
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AutoResolveIntegrationRuntime')]",
+			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "Managed",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "AutoResolve",
+						"dataFlowProperties": {
+							"computeType": "General",
+							"coreCount": 8,
+							"timeToLive": 0
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Dataflow')]",
+			"type": "Microsoft.Synapse/workspaces/dataflows",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_parquet_bronze",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_parquet_silver",
+								"type": "DatasetReference"
+							},
+							"name": "silverDestination"
+						}
+					],
+					"transformations": [
+						{
+							"name": "filtergreaterthan100"
+						},
+						{
+							"name": "deriveddomain"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          OrderID as string,",
+						"          OrderDate as date,",
+						"          CustomerID as string,",
+						"          CustomerName as string,",
+						"          CustomerEmail as string,",
+						"          ProductID as string,",
+						"          ProductName as string,",
+						"          ProductCategory as string,",
+						"          RegionID as string,",
+						"          RegionName as string,",
+						"          Country as string,",
+						"          Quantity as string,",
+						"          UnitPrice as long,",
+						"          TotalAmount as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     format: 'parquet') ~> source1",
+						"source1 filter(UnitPrice>=100) ~> filtergreaterthan100",
+						"filtergreaterthan100 derive(domain = split(CustomerEmail,'@')[2]) ~> deriveddomain",
+						"deriveddomain sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'parquet',",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> silverDestination"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/ds_parquet_bronze')]",
+				"[concat(variables('workspaceId'), '/datasets/ds_parquet_silver')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/WorkspaceSystemIdentity')]",
+			"type": "Microsoft.Synapse/workspaces/credentials",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "ManagedIdentity",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Dimensions')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "\n-- Dim Customer\nIF NOT EXISTS(SELECT * FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id \nWHERE t.name = 'DimCustomers' AND s.name = 'gold' )\n\nCREATE EXTERNAL TABLE gold.DimCustomers\nWITH\n    (\n        LOCATION = 'DimCustomers',\n        DATA_SOURCE = gold_source,\n        FILE_FORMAT = parquet_format\n    )\nAS\nSELECT \n    ROW_NUMBER() OVER(ORDER BY CustomerID) AS DimCustomers,\n    CustomerID,\n    CustomerName,\n    CustomerEmail\nFROM(\n    SELECT \n    DISTINCT \n    CustomerID,\n    CustomerName,\n    CustomerEmail\nFROM silver.silverTable \n) AS t\n\n-- Dim Product\nIF NOT EXISTS(SELECT * FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id \n    WHERE t.name = 'DimProducts' AND s.name = 'gold' )\nCREATE EXTERNAL TABLE gold.DimProducts\nWITH\n    (\n        LOCATION = 'DimProducts',\n        DATA_SOURCE = gold_source,\n        FILE_FORMAT = parquet_format\n    )\nAS\nSELECT \n    ROW_NUMBER() OVER(ORDER BY ProductID) AS DimProducts,\n    ProductID,\n    ProductName,\n    ProductCategory\nFROM(\n    SELECT \n    DISTINCT \n    ProductID,\n    ProductName,\n    ProductCategory\nFROM silver.silverTable \n) AS t\n\n\n-- Dim Region\nIF NOT EXISTS(SELECT * FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id \n    WHERE t.name = 'DimRegions' AND s.name = 'gold' )\nCREATE EXTERNAL TABLE gold.DimRegions\nWITH\n    (\n        LOCATION = 'DimRegions',\n        DATA_SOURCE = gold_source,\n        FILE_FORMAT = parquet_format\n    )\nAS\nSELECT \n    ROW_NUMBER() OVER(ORDER BY RegionID) AS DimRegions,\n    RegionID,\n    RegionName,\n    Country\nFROM(\n    SELECT \n    DISTINCT \n    RegionID,\n    RegionName,\n    Country\nFROM silver.silverTable \n) AS t\n\nSELECT * FROM silver.silverTable\n\n-- Dim Order\nIF NOT EXISTS(SELECT * FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id \n    WHERE t.name = 'DimOrders' AND s.name = 'gold' )\nCREATE EXTERNAL TABLE gold.DimOrders\nWITH\n    (\n        LOCATION = 'DimOrders',\n        DATA_SOURCE = gold_source,\n        FILE_FORMAT = parquet_format\n    )\nAS\nSELECT \n    ROW_NUMBER() OVER(ORDER BY OrderID) AS DimOrders,\n    OrderID,\n    OrderDate,\n    CustomerID,\n    CustomerName,\n    CustomerEmail,\n    ProductID,\n    ProductName,\n    ProductCategory,\n    RegionID,\n    RegionName,\n    Country\nFROM(\n    SELECT \n    DISTINCT \n    OrderID,\n    OrderDate,\n    CustomerID,\n    CustomerName,\n    CustomerEmail,\n    ProductID,\n    ProductName,\n    ProductCategory,\n    RegionID,\n    RegionName,\n    Country\nFROM silver.silverTable \n) AS t\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "SalesDWH",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ExplorationScript')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "-- This is auto-generated code\nSELECT\n    TOP 100 *\nFROM\n    OPENROWSET(\n        BULK 'enriched_sales',\n        DATA_SOURCE = 'silver_source' ,\n        FORMAT = 'PARQUET'\n    ) AS [result]\n\n-- list external sources\nSELECT *\nFROM sys.external_data_sources;\n\nSELECT * FROM silver.silverTable;\n\n-- to see schema\nEXEC sp_describe_first_result_set\nN'\nSELECT *\nFROM OPENROWSET(\n    BULK ''enriched_sales/'',\n    DATA_SOURCE = ''silver_source'',\n    FORMAT = ''PARQUET''\n) AS result;\n';\n\n-- schema handling \nSELECT\n     *\nFROM\n    OPENROWSET\n(\n        BULK 'enriched_sales',\n        DATA_SOURCE = 'silver_source' ,\n        FORMAT = 'PARQUET'\n)\nWITH\n(\n    ORDER_DI VARCHAR(100) 1\n\n) as query1\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "SalesDWH",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Ext_Resources')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "-- Create Masterkey\nCREATE MASTER KEY ENCRYPTION BY PASSWORD = ''\n\n-- Database Scoped Credential\nCREATE DATABASE SCOPED CREDENTIAL noor_creds\nWITH IDENTITY = 'Managed Identity'\n\n-- External Data Source\n\nCREATE EXTERNAL DATA SOURCE silver_source\nWITH\n(\n    LOCATION = 'https://projectstoragenoor.dfs.core.windows.net/silver/',\n    CREDENTIAL = noor_creds\n)\n\nCREATE EXTERNAL DATA SOURCE gold_source\nWITH\n(\n    LOCATION = 'https://projectstoragenoor.dfs.core.windows.net/gold/',\n    CREDENTIAL = noor_creds\n)\n\n-- External file format\nCREATE EXTERNAL FILE FORMAT parquet_format\nWITH\n(\n    FORMAT_TYPE = PARQUET,\n    DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'\n\n)\n\nCREATE EXTERNAL FILE FORMAT delta_format\nWITH\n(\n    FORMAT_TYPE = DELTA,\n    DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'\n\n)\n\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "SalesDWH",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Facts')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "IF NOT EXISTS(SELECT * FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id \nWHERE t.name = 'Facts' AND s.name = 'gold' )\nCREATE EXTERNAL TABLE gold.Facts\nWITH\n    (\n        LOCATION = 'Facts',\n        DATA_SOURCE = gold_source,\n        FILE_FORMAT = parquet_format\n    )\nAS\nSELECT \n    o.DimOrders,\n    c.DimCustomers,\n    p.DimProducts,\n    r.DimRegions,\n    s.Quantity,\n    s.UnitPrice,\n    s.TotalAmount\nFROM silver.silverTable s\nLEFT JOIN gold.DimOrders o\nON s.OrderID = o.OrderID\nLEFT JOIN gold.DimCustomers c \nON s.CustomerID = c.CustomerID\nLEFT JOIN gold.DimProducts p \nON s.ProductID = p.ProductID\nLEFT JOIN gold.DimRegions r\nON s.RegionID = r.RegionID\nAND s.RegionName = r.RegionName\nAND s.Country = r.Country\n\n\nSELECT * FROM gold.Facts",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "SalesDWH",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Schemas')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "\n\nCREATE SCHEMA silver;\n\nCREATE SCHEMA gold;",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "master",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SilverTable')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "\n\nIF NOT EXISTS(SELECT * FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id \nWHERE t.name = 'silverTable' AND s.name = 'silver' )\n    CREATE EXTERNAL TABLE silver.silverTable\n    (\n        OrderID          VARCHAR(100),\n        OrderDate        DATE,\n        CustomerID       VARCHAR(100),\n        CustomerName     VARCHAR(100),\n        CustomerEmail    VARCHAR(100),\n        ProductID        VARCHAR(100),\n        ProductName      VARCHAR(100),\n        ProductCategory  VARCHAR(100),\n        RegionID         VARCHAR(100),\n        RegionName       VARCHAR(100),\n        Country          VARCHAR(100),\n        Quantity         VARCHAR(100),\n        UnitPrice        BIGINT,\n        TotalAmount      VARCHAR(100),\n        Domain           VARCHAR(100)\n    )\n    WITH\n    (\n        LOCATION = 'enriched_sales',\n        DATA_SOURCE = silver_source,\n        FILE_FORMAT = parquet_format\n    );\n\nSELECT * FROM silver.silverTable\n\n\n\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "SalesDWH",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		}
+	]
+}

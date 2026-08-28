@@ -1,0 +1,30 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"value": "azuresynapsedatawarehousing"
+		},
+		"azuresynapsedatawarehousing-WorkspaceDefaultSqlServer_connectionString": {
+			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:azuresynapsedatawarehousing.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+		},
+		"ls_serverless_password": {
+			"value": ""
+		},
+		"azuresynapsedatawarehousing-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"value": "https://synpsmngdstrg.dfs.core.windows.net"
+		},
+		"ls_datalake_properties_typeProperties_url": {
+			"value": "https://projectstoragenoor.dfs.core.windows.net/"
+		},
+		"ls_serverless_properties_typeProperties_server": {
+			"value": "azuresynapsedatawarehousing-ondemand.sql.azuresynapse.net"
+		},
+		"ls_serverless_properties_typeProperties_database": {
+			"value": "SalesDWH"
+		},
+		"ls_serverless_properties_typeProperties_userName": {
+			"value": "adminnoor"
+		}
+	}
+}
