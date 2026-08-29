@@ -1,0 +1,17 @@
+{
+	"name": "Copy Into",
+	"properties": {
+		"content": {
+			"query": "\n-- COPY INTO\nDROP TABLE copy_into_table\nCREATE TABLE copy_into_table\n(\n    Dealer_ID VARCHAR(4000),\n    Model_ID VARCHAR(4000),\n    Branch_ID VARCHAR(4000),\n    Date_ID VARCHAR(4000),\n    Units_Sold BIGINT,\n    Revenue BIGINT\n)\nWITH\n(\n    DISTRIBUTION = ROUND_ROBIN\n)\n\n-- Loading data from a file into copy_into_table\n\nCOPY INTO copy_into_table\n(\n    Dealer_ID 1,\n    Model_ID 2,\n    Branch_ID 3,\n    Date_ID 4,\n    Units_Sold 5,\n    Revenue 6\n)\nFROM 'https://storagesynapselearning.dfs.core.windows.net/enriched/enriched_files/'\nWITH\n(\n    FILE_TYPE = 'PARQUET',\n    CREDENTIAL = (IDENTITY = 'Managed Identity')\n\n)\n\nSELECT * FROM copy_into_table",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "noordedicatedpool",
+				"poolName": "noordedicatedpool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

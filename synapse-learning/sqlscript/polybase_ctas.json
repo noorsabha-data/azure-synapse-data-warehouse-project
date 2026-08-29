@@ -1,0 +1,17 @@
+{
+	"name": "polybase_ctas",
+	"properties": {
+		"content": {
+			"query": "CREATE EXTERNAL TABLE parquet_table\n(\n    Dealer_ID VARCHAR(4000),\n    Model_ID VARCHAR(4000),\n    Branch_ID VARCHAR(4000),\n    Date_ID VARCHAR(4000),\n    Units_Sold BIGINT,\n    Revenue BIGINT\n)\nWITH\n(\n    LOCATION = 'enriched_files',\n    DATA_SOURCE = enriched_ext_source,\n    FILE_FORMAT = parquet_format\n\n)\n\n\n--ctas(polybase)\nCREATE TABLE ploy_table\nWITH(\n    DISTRIBUTION = ROUND_ROBIN\n)\nAS \nSELECT * FROM parquet_table\n\nSELECT * FROM ploy_table",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "noordedicatedpool",
+				"poolName": "noordedicatedpool"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

@@ -1,0 +1,17 @@
+{
+	"name": "external_sql_objects",
+	"properties": {
+		"content": {
+			"query": "-- Creating Master Key\n-- CREATE MASTER KEY ENCRYPTION BY PASSWORD = ''\n\n-- Create Credential\nCREATE DATABASE SCOPED CREDENTIAL noorcreds\nWITH\n    IDENTITY = 'Managed Identity'\n\n-- CREATING EXTERNAL DATA SOURCE with raw container\n\nCREATE EXTERNAL DATA SOURCE raw_ext_source\nWITH\n(\n    LOCATION = 'https://storagesynapselearning.dfs.core.windows.net/raw/',\n    CREDENTIAL = noorcreds\n)\n\n-- CREATING EXTERNAL DATA SOURCE with enriched container\n\nCREATE EXTERNAL DATA SOURCE enriched_ext_source\nWITH\n(\n    LOCATION = 'https://storagesynapselearning.dfs.core.windows.net/enriched/',\n    CREDENTIAL = noorcreds\n)\n\n-- Creating external file format csv\n\n-- DROP EXTERNAL FILE FORMAT csv_format\nCREATE EXTERNAL FILE FORMAT csv_format\nWITH\n(\n    FORMAT_TYPE = DELIMITEDTEXT,\n    FORMAT_OPTIONS(\n                        FIELD_TERMINATOR = ',',\n                        FIRST_ROW = 2,\n                        ENCODING = 'UTF8'\n\n                )\n)\n\n-- Creating external file format parquet\nCREATE EXTERNAL FILE FORMAT parquet_format\nWITH\n(\n    FORMAT_TYPE = PARQUET,\n    DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'\n)",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "noorserverless",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

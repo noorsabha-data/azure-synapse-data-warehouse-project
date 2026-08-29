@@ -1,0 +1,17 @@
+{
+	"name": "Views",
+	"properties": {
+		"content": {
+			"query": "\nALTER DATABASE noorserverless\nCOLLATE Latin1_General_100_BIN2_UTF8;\n\nSELECT DATABASEPROPERTYEX('noorserverless', 'Collation') AS DatabaseCollation;\n\n-- VIEWS\n\nDROP VIEW IF EXISTS revenue_view;\nCREATE VIEW revenue_view\nAS\nSELECT \n    *\nFROM \n    OPENROWSET\n    (\n        BULK 'raw_files',\n        DATA_SOURCE = 'raw_ext_source',\n        FORMAT = 'CSV' ,\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    )\n AS Query1; \n\n-- SELECT * FROM revenue_view",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "noorserverless",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}

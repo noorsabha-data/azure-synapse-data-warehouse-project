@@ -1,0 +1,17 @@
+{
+	"name": "CETAS",
+	"properties": {
+		"content": {
+			"query": "-- CETAS using openrowset \n\nCREATE EXTERNAL TABLE revenue_cetas\nWITH(\n    LOCATION = 'enriched_files',\n    DATA_SOURCE = enriched_ext_source,\n    FILE_FORMAT = parquet_format\n)\nAS\nSELECT \n    *\nFROM \n    OPENROWSET\n    (\n        BULK 'raw_files',\n        DATA_SOURCE = 'raw_ext_source',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    )\n AS Query1; \n\n -- cetas using views\n\nCREATE EXTERNAL TABLE revenue_cetas_view\nWITH(\n    LOCATION = 'enriched_files_view',\n    DATA_SOURCE = enriched_ext_source,\n    FILE_FORMAT = parquet_format\n)\nAS\nSELECT \n    *\nFROM revenue_view\n\n-- SELECT * FROM revenue_cetas_view\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "noorserverless",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
