@@ -1,0 +1,346 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"type": "string",
+			"metadata": "Workspace name",
+			"defaultValue": "synpslrngwrkspc"
+		},
+		"synpslrngwrkspc-WorkspaceDefaultSqlServer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'synpslrngwrkspc-WorkspaceDefaultSqlServer'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:synpslrngwrkspc.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+		},
+		"ls_ext_data_lake_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://storagesynapselearning.dfs.core.windows.net/"
+		},
+		"synpslrngwrkspc-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://synpslrngstrg.dfs.core.windows.net"
+		}
+	},
+	"variables": {
+		"workspaceId": "[concat('Microsoft.Synapse/workspaces/', parameters('workspaceName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('workspaceName'), '/noorsparkpool')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ls_ext_data_lake')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('ls_ext_data_lake_properties_typeProperties_url')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/synpslrngwrkspc-WorkspaceDefaultSqlServer')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"parameters": {
+					"DBName": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"connectionString": "[parameters('synpslrngwrkspc-WorkspaceDefaultSqlServer_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/synpslrngwrkspc-WorkspaceDefaultStorage')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('synpslrngwrkspc-WorkspaceDefaultStorage_properties_typeProperties_url')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AutoResolveIntegrationRuntime')]",
+			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "Managed",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "AutoResolve",
+						"dataFlowProperties": {
+							"computeType": "General",
+							"coreCount": 8,
+							"timeToLive": 0
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/WorkspaceSystemIdentity')]",
+			"type": "Microsoft.Synapse/workspaces/credentials",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "ManagedIdentity",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/CETAS')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "-- CETAS using openrowset \n\nCREATE EXTERNAL TABLE revenue_cetas\nWITH(\n    LOCATION = 'enriched_files',\n    DATA_SOURCE = enriched_ext_source,\n    FILE_FORMAT = parquet_format\n)\nAS\nSELECT \n    *\nFROM \n    OPENROWSET\n    (\n        BULK 'raw_files',\n        DATA_SOURCE = 'raw_ext_source',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    )\n AS Query1; \n\n -- cetas using views\n\nCREATE EXTERNAL TABLE revenue_cetas_view\nWITH(\n    LOCATION = 'enriched_files_view',\n    DATA_SOURCE = enriched_ext_source,\n    FILE_FORMAT = parquet_format\n)\nAS\nSELECT \n    *\nFROM revenue_view\n\n-- SELECT * FROM revenue_cetas_view\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "noorserverless",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Copy Into')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "\n-- COPY INTO\nDROP TABLE copy_into_table\nCREATE TABLE copy_into_table\n(\n    Dealer_ID VARCHAR(4000),\n    Model_ID VARCHAR(4000),\n    Branch_ID VARCHAR(4000),\n    Date_ID VARCHAR(4000),\n    Units_Sold BIGINT,\n    Revenue BIGINT\n)\nWITH\n(\n    DISTRIBUTION = ROUND_ROBIN\n)\n\n-- Loading data from a file into copy_into_table\n\nCOPY INTO copy_into_table\n(\n    Dealer_ID 1,\n    Model_ID 2,\n    Branch_ID 3,\n    Date_ID 4,\n    Units_Sold 5,\n    Revenue 6\n)\nFROM 'https://storagesynapselearning.dfs.core.windows.net/enriched/enriched_files/'\nWITH\n(\n    FILE_TYPE = 'PARQUET',\n    CREDENTIAL = (IDENTITY = 'Managed Identity')\n\n)\n\nSELECT * FROM copy_into_table",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "noordedicatedpool",
+						"poolName": "noordedicatedpool"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Views')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "\nALTER DATABASE noorserverless\nCOLLATE Latin1_General_100_BIN2_UTF8;\n\nSELECT DATABASEPROPERTYEX('noorserverless', 'Collation') AS DatabaseCollation;\n\n-- VIEWS\n\nDROP VIEW IF EXISTS revenue_view;\nCREATE VIEW revenue_view\nAS\nSELECT \n    *\nFROM \n    OPENROWSET\n    (\n        BULK 'raw_files',\n        DATA_SOURCE = 'raw_ext_source',\n        FORMAT = 'CSV' ,\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    )\n AS Query1; \n\n-- SELECT * FROM revenue_view",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "noorserverless",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/dedicated_ext_resources')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "-- Creating Master Key\n-- CREATE MASTER KEY ENCRYPTION BY PASSWORD = ''\n\n-- Create Credential\nCREATE DATABASE SCOPED CREDENTIAL noorcreds\nWITH\n    IDENTITY = 'Managed Identity'\n\n-- CREATING EXTERNAL DATA SOURCE with raw container\n\nCREATE EXTERNAL DATA SOURCE raw_ext_source\nWITH\n(\n    LOCATION = 'abfss://raw@storagesynapselearning.dfs.core.windows.net/',\n    CREDENTIAL = noorcreds\n)\n\n-- CREATING EXTERNAL DATA SOURCE with enriched container\n\nCREATE EXTERNAL DATA SOURCE enriched_ext_source\nWITH\n(\n    LOCATION = 'abfss://enriched@storagesynapselearning.dfs.core.windows.net/',\n    CREDENTIAL = noorcreds\n)\n\n-- Creating external file format parquet\nCREATE EXTERNAL FILE FORMAT parquet_format\nWITH\n(\n    FORMAT_TYPE = PARQUET,\n    DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'\n)",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "noordedicatedpool",
+						"poolName": "noordedicatedpool"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/distributed_tables')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "\n--Round Robin Table\nCREATE TABLE round_table\n(\n    id INT,\n    name VARCHAR(4000),\n    salary INT\n)\nWITH\n(\n    DISTRIBUTION = ROUND_ROBIN\n\n)\n\nINSERT INTO round_table\nVALUES\n(1,'aa',10);\n\nSELECT * FROM round_table\n\n-- Replicate Table\nCREATE SCHEMA gold;\n\nCREATE TABLE gold.dim_product\n(\n    dim_prod_key INT,\n    prod_id INT,\n    prod_name VARCHAR(4000)\n)\nWITH\n(\n    DISTRIBUTION = REPLICATE\n)\n\n-- Hash Distribution \nCREATE TABLE gold.fact_table\n(\n    dim_key_prod INT,\n    revenue INT,\n    cost INT\n)\nWITH \n(\n    DISTRIBUTION = HASH(dim_key_prod)\n)",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "noordedicatedpool",
+						"poolName": "noordedicatedpool"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/external_sql_objects')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "-- Creating Master Key\n-- CREATE MASTER KEY ENCRYPTION BY PASSWORD = ''\n\n-- Create Credential\nCREATE DATABASE SCOPED CREDENTIAL noorcreds\nWITH\n    IDENTITY = 'Managed Identity'\n\n-- CREATING EXTERNAL DATA SOURCE with raw container\n\nCREATE EXTERNAL DATA SOURCE raw_ext_source\nWITH\n(\n    LOCATION = 'https://storagesynapselearning.dfs.core.windows.net/raw/',\n    CREDENTIAL = noorcreds\n)\n\n-- CREATING EXTERNAL DATA SOURCE with enriched container\n\nCREATE EXTERNAL DATA SOURCE enriched_ext_source\nWITH\n(\n    LOCATION = 'https://storagesynapselearning.dfs.core.windows.net/enriched/',\n    CREDENTIAL = noorcreds\n)\n\n-- Creating external file format csv\n\n-- DROP EXTERNAL FILE FORMAT csv_format\nCREATE EXTERNAL FILE FORMAT csv_format\nWITH\n(\n    FORMAT_TYPE = DELIMITEDTEXT,\n    FORMAT_OPTIONS(\n                        FIELD_TERMINATOR = ',',\n                        FIRST_ROW = 2,\n                        ENCODING = 'UTF8'\n\n                )\n)\n\n-- Creating external file format parquet\nCREATE EXTERNAL FILE FORMAT parquet_format\nWITH\n(\n    FORMAT_TYPE = PARQUET,\n    DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'\n)",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "noorserverless",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/external_tables')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "\n\n\n-- CREATING EXTERNAL TABLE \n-- DROP EXTERNAL TABLE revenue_ext_table\nCREATE EXTERNAL TABLE revenue_ext_table\n(\n    Dealer_ID VARCHAR(4000),\n    Model_ID VARCHAR(4000),\n    Branch_ID VARCHAR(4000),\n    Date_ID VARCHAR(4000),\n    Units_Sold VARCHAR(4000),\n    Revenue VARCHAR(4000)\n)\nWITH\n(\n    LOCATION = 'raw_files',\n    DATA_SOURCE = raw_ext_source,\n    FILE_FORMAT = csv_format\n)\n\nSELECT * FROM revenue_ext_table",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "noorserverless",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/openrowset')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "\n\n-- Reading Data From the File \n-- OPENROWSET FUNCTION (to apply sql on top of data sitting in the data lake)\nSELECT \n    *\nFROM \n    OPENROWSET\n    (\n        BULK 'raw_files',\n        DATA_SOURCE = 'raw_ext_source',\n        FORMAT = 'CSV',\n        PARSER_VERSION = '2.0',\n        HEADER_ROW = TRUE\n    ) AS Query1\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "noorserverless",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/polybase_ctas')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "CREATE EXTERNAL TABLE parquet_table\n(\n    Dealer_ID VARCHAR(4000),\n    Model_ID VARCHAR(4000),\n    Branch_ID VARCHAR(4000),\n    Date_ID VARCHAR(4000),\n    Units_Sold BIGINT,\n    Revenue BIGINT\n)\nWITH\n(\n    LOCATION = 'enriched_files',\n    DATA_SOURCE = enriched_ext_source,\n    FILE_FORMAT = parquet_format\n\n)\n\n\n--ctas(polybase)\nCREATE TABLE ploy_table\nWITH(\n    DISTRIBUTION = ROUND_ROBIN\n)\nAS \nSELECT * FROM parquet_table\n\nSELECT * FROM ploy_table",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "noordedicatedpool",
+						"poolName": "noordedicatedpool"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/noordedicatedpool')]",
+			"type": "Microsoft.Synapse/workspaces/sqlPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"collation": "SQL_Latin1_General_CP1_CI_AS",
+				"maxSizeBytes": 263882790666240,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "centralus"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/noorsparkpool')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"autoPause": {
+					"enabled": true,
+					"delayInMinutes": 15
+				},
+				"autoScale": {
+					"enabled": true,
+					"maxNodeCount": 3,
+					"minNodeCount": 3
+				},
+				"nodeCount": 10,
+				"nodeSize": "Medium",
+				"nodeSizeFamily": "MemoryOptimized",
+				"sparkVersion": "3.5",
+				"isComputeIsolationEnabled": false,
+				"sessionLevelPackagesEnabled": false,
+				"annotations": []
+			},
+			"dependsOn": [],
+			"location": "centralus"
+		}
+	]
+}
